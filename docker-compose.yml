@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: babyshop-postgres
+    environment:
+      POSTGRES_DB: babyshop_db
+      POSTGRES_USER: babyshop_user
+      POSTGRES_PASSWORD: babyshop_password_dev_only
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.utf8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - babyshop-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U babyshop_user -d babyshop_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Spring Boot API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: babyshop-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/babyshop_db
+      SPRING_DATASOURCE_USERNAME: babyshop_user
+      SPRING_DATASOURCE_PASSWORD: babyshop_password_dev_only
+      JWT_SECRET: dev_jwt_secret_change_in_production_min_256_bits_long
+      JWT_EXPIRATION: 3600000
+      JWT_REFRESH_EXPIRATION: 86400000
+    ports:
+      - "8080:8080"
+    networks:
+      - babyshop-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Redis for caching and session management (optional but recommended)
+  redis:
+    image: redis:7-alpine
+    container_name: babyshop-redis
+    command: redis-server --appendonly yes --requirepass redis_password_dev_only
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - babyshop-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  babyshop-network:
+    driver: bridge
+

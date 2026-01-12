@@ -1,0 +1,85 @@
+package com.babyshop.api.common.dto;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.Instant;
+
+/**
+ * Standard API response wrapper.
+ * All API responses should use this structure for consistency.
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ApiResponse<T> {
+
+    private boolean success;
+    private String message;
+    private T data;
+    private ApiError error;
+    private Instant timestamp;
+
+    /**
+     * Create a successful response with data
+     */
+    public static <T> ApiResponse<T> success(T data) {
+        return ApiResponse.<T>builder()
+                .success(true)
+                .data(data)
+                .timestamp(Instant.now())
+                .build();
+    }
+
+    /**
+     * Create a successful response with message and data
+     */
+    public static <T> ApiResponse<T> success(String message, T data) {
+        return ApiResponse.<T>builder()
+                .success(true)
+                .message(message)
+                .data(data)
+                .timestamp(Instant.now())
+                .build();
+    }
+
+    /**
+     * Create a successful response with only message
+     */
+    public static <T> ApiResponse<T> success(String message) {
+        return ApiResponse.<T>builder()
+                .success(true)
+                .message(message)
+                .timestamp(Instant.now())
+                .build();
+    }
+
+    /**
+     * Create an error response
+     */
+    public static <T> ApiResponse<T> error(String message, ApiError error) {
+        return ApiResponse.<T>builder()
+                .success(false)
+                .message(message)
+                .error(error)
+                .timestamp(Instant.now())
+                .build();
+    }
+
+    /**
+     * Create an error response with message only
+     */
+    public static <T> ApiResponse<T> error(String message) {
+        return ApiResponse.<T>builder()
+                .success(false)
+                .message(message)
+                .timestamp(Instant.now())
+                .build();
+    }
+}
+

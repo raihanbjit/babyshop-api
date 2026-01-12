@@ -1,0 +1,36 @@
+# Build artifacts
+target/
+build/
+.gradle/
+bin/
+out/
+
+# Git and IDE
+.git
+.gitignore
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Environment and secrets
+.env
+.env.*
+*.log
+*.logs
+
+# Test and coverage
+coverage/
+test-results/
+
+# Node (if any frontend tooling)
+node_modules/
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Documentation
+README.md
+docs/
